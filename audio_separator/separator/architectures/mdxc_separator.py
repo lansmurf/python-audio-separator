@@ -204,7 +204,7 @@ class MDXCSeparator(CommonSeparator):
             mix, sample_rate = spec_utils.change_pitch_semitones(mix, self.sample_rate, semitone_shift=-self.pitch_shift)
 
         if self.is_roformer:
-            mix = torch.tensor(mix, dtype=torch.float16)
+            mix = torch.tensor(mix, dtype=torch.float32)
 
             if self.override_model_segment_size:
                 mdx_segment_size = self.segment_size
@@ -225,7 +225,7 @@ class MDXCSeparator(CommonSeparator):
             self.logger.debug(f"Step: {step}")
 
             # Create a weighting table and convert it to a PyTorch tensor
-            window = torch.tensor(signal.windows.hamming(chunk_size), dtype=torch.float16)
+            window = torch.tensor(signal.windows.hamming(chunk_size), dtype=torch.float32)
 
             device = next(self.model_run.parameters()).device
 
@@ -235,8 +235,8 @@ class MDXCSeparator(CommonSeparator):
             # with torch.cuda.amp.autocast():
             with torch.no_grad():
                 req_shape = (len(self.model_data_cfgdict.training.instruments),) + tuple(mix.shape)
-                result = torch.zeros(req_shape, dtype=torch.float16).to(device)
-                counter = torch.zeros(req_shape, dtype=torch.float16).to(device)
+                result = torch.zeros(req_shape, dtype=torch.float32).to(device)
+                counter = torch.zeros(req_shape, dtype=torch.float32).to(device)
 
                 for i in tqdm(range(0, mix.shape[1], step)):
                     part = mix[:, i : i + chunk_size]
@@ -257,7 +257,7 @@ class MDXCSeparator(CommonSeparator):
             inferenced_outputs = result / counter.clamp(min=1e-10)
 
         else:
-            mix = torch.tensor(mix, dtype=torch.float16)
+            mix = torch.tensor(mix, dtype=torch.float32)
 
             try:
                 num_stems = self.model_run.num_target_instruments
